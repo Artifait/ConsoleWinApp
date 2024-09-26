@@ -16,18 +16,25 @@ namespace QuizTop.UI
             return (T)WinForms[typeof(T)];
         }
 
-        public static void AddErroreWindow(string[] messages)
+        public static void AddErroreWindow(string[] messages, bool isFatal = false)
         {
-            WinErrore window = GetWindow<WinErrore>();
-
             List<string> stringList1 = new();
             foreach (string message in messages)
                 stringList1.AddRange(message.Split('\n'));
 
-            window.UpdateErroreMsg(stringList1.ToArray());
+            IWin window;
+            if (isFatal)
+            {
+                window = GetWindow<WinErrore>();
+                ((WinErrore)window).UpdateErroreMsg(stringList1.ToArray());
+            }
+            else
+            {
+                window = GetWindow<WinFatalError>();
+                ((WinFatalError)window).UpdateFatalErrorMsg(stringList1.ToArray());
+            }
             Application.WinStack.Push(window);
         }
-
         public static void AddInfoWindow(string[]? messages)
         {
             WinInfo window = GetWindow<WinInfo>();

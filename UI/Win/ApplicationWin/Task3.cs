@@ -40,6 +40,7 @@ namespace ConsoleWinApp.UI.Win.ApplicationWin
         private void HandlerMetodMenu()
         {
             Console.Clear();
+            Console.CursorTop = SizeY;
             switch ((ProgramOptions)windowDisplay.CursorPosition)
             {
                 case ProgramOptions.DisplayAllInfo:
@@ -66,50 +67,13 @@ namespace ConsoleWinApp.UI.Win.ApplicationWin
             }
         }
 
-        private void DisplayAllInfo()
-        {
-            var results = db.GetAllInfo();
-            foreach (var row in results)
-            {
-                Console.WriteLine($"ID: {row.Id}, Name: {row.Name}, Type: {row.Type}, Color: {row.Color}, Calories: {row.Calories}");
-            }
-        }
+        private void DisplayAllInfo() => TV.DisplayTable(db.GetAllInfo());
+        private void DisplayAllNames() => TV.DisplayTable(db.GetAllNames());
+        private void DisplayAllColors() => TV.DisplayTable(db.GetAllColors());
+        private void DisplayMaxCalories() => TV.DisplayTable(db.GetMaxCalories());
+        private void DisplayMinCalories() => TV.DisplayTable(db.GetMinCalories());
+        private void DisplayAvgCalories() => TV.DisplayTable(db.GetAvgCalories());
 
-        private void DisplayAllNames()
-        {
-            var names = db.GetAllNames();
-            foreach (var name in names)
-            {
-                Console.WriteLine(name);
-            }
-        }
-
-        private void DisplayAllColors()
-        {
-            var colors = db.GetAllColors();
-            foreach (var color in colors)
-            {
-                Console.WriteLine(color);
-            }
-        }
-
-        private void DisplayMaxCalories()
-        {
-            var maxCalories = db.GetMaxCalories();
-            Console.WriteLine($"Max Calories: {maxCalories}");
-        }
-
-        private void DisplayMinCalories()
-        {
-            var minCalories = db.GetMinCalories();
-            Console.WriteLine($"Min Calories: {minCalories}");
-        }
-
-        private void DisplayAvgCalories()
-        {
-            var avgCalories = db.GetAvgCalories();
-            Console.WriteLine($"Average Calories: {avgCalories}");
-        }
 
         public enum ProgramOptions
         {

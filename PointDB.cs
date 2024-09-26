@@ -1,7 +1,6 @@
 ﻿using QuizTop.UI;
 using System.Data;
 using System.Data.SqlClient;
-using System.Collections.Generic;
 
 public class PointDB
 {
@@ -16,6 +15,7 @@ public class PointDB
 
     public bool OpenDB()
     {
+        if (IsWork()) return true;
         try
         {
             conn.Open();
@@ -24,13 +24,12 @@ public class PointDB
         }
         catch (Exception ex)
         {
-            WindowsHandler.AddErroreWindow(new string[] { ex.Message });
+            WindowsHandler.AddErroreWindow(new string[] { ex.Message }, true);
         }
-        CLoseBD();
         return false;
     }
 
-    public void CLoseBD()
+    public void CloseDB()
     {
         if (conn.State == ConnectionState.Open)
             conn.Close();
@@ -39,80 +38,171 @@ public class PointDB
     public bool IsWork() => conn.State == ConnectionState.Open;
 
     // Получить всю информацию
-    public List<(int Id, string Name, string Type, string Color, int Calories)> GetAllInfo()
+    public DataTable GetAllInfo()
     {
         string query = "SELECT Id, Name, Type, Color, Calories FROM FruitsAndVegetables";
-        SqlCommand command = new SqlCommand(query, conn);
-        var result = new List<(int, string, string, string, int)>();
-
-        using (SqlDataReader reader = command.ExecuteReader())
-        {
-            while (reader.Read())
-            {
-                result.Add((reader.GetInt32(0), reader.GetString(1), reader.GetString(2), reader.GetString(3), reader.GetInt32(4)));
-            }
-        }
-
-        return result;
+        return ExecuteQuery(query);
     }
 
     // Получить все названия
-    public List<string> GetAllNames()
+    public DataTable GetAllNames()
     {
         string query = "SELECT Name FROM FruitsAndVegetables";
-        SqlCommand command = new SqlCommand(query, conn);
-        var result = new List<string>();
-
-        using (SqlDataReader reader = command.ExecuteReader())
-        {
-            while (reader.Read())
-            {
-                result.Add(reader.GetString(0));
-            }
-        }
-
-        return result;
+        return ExecuteQuery(query);
     }
 
     // Получить все цвета
-    public List<string> GetAllColors()
+    public DataTable GetAllColors()
     {
         string query = "SELECT DISTINCT Color FROM FruitsAndVegetables";
-        SqlCommand command = new SqlCommand(query, conn);
-        var result = new List<string>();
-
-        using (SqlDataReader reader = command.ExecuteReader())
-        {
-            while (reader.Read())
-            {
-                result.Add(reader.GetString(0));
-            }
-        }
-
-        return result;
+        return ExecuteQuery(query);
     }
 
     // Максимальная калорийность
-    public int GetMaxCalories()
+    public DataTable GetMaxCalories()
     {
-        string query = "SELECT MAX(Calories) FROM FruitsAndVegetables";
-        SqlCommand command = new SqlCommand(query, conn);
-        return (int)command.ExecuteScalar();
+        string query = "SELECT MAX(Calories) AS MaxCalories FROM FruitsAndVegetables";
+        return ExecuteQuery(query);
     }
 
     // Минимальная калорийность
-    public int GetMinCalories()
+    public DataTable GetMinCalories()
     {
-        string query = "SELECT MIN(Calories) FROM FruitsAndVegetables";
+        string query = "SELECT MIN(Calories) AS MinCalories FROM FruitsAndVegetables";
+        return ExecuteQuery(query);
+    }
+
+    // Средняя калорийность
+    public DataTable GetAvgCalories()
+    {
+        string query = "SELECT AVG(Calories) AS AvgCalories FROM FruitsAndVegetables";
+        return ExecuteQuery(query);
+    }
+
+    private DataTable ExecuteQuery(string query)
+    {
+        DataTable dt = new DataTable();
+        try
+        {
+            if (OpenDB())
+            {
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+                    {
+                        adapter.Fill(dt);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            CloseDB();
+            WindowsHandler.AddErroreWindow(new string[] { "Сломалась бд :(", ex.Message }, true);
+        }
+        return dt;
+    }
+
+    // Получение количества овощей
+    public int GetVegetableCount()
+    {
+        string query = "SELECT COUNT(*) FROM FruitsAndVegetables WHERE Type = 'Vegetable'";
         SqlCommand command = new SqlCommand(query, conn);
         return (int)command.ExecuteScalar();
     }
 
-    // Средняя калорийность
-    public double GetAvgCalories()
+    // Получение количества фруктов
+    public int GetFruitCount()
     {
-        string query = "SELECT AVG(Calories) FROM FruitsAndVegetables";
+        string query = "SELECT COUNT(*) FROM FruitsAndVegetables WHERE Type = 'Fruit'";
         SqlCommand command = new SqlCommand(query, conn);
-        return (double)command.ExecuteScalar();
+        return (int)command.ExecuteScalar();
+    }
+
+    // Получение количества овощей и фруктов заданного цвета
+    public int GetCountByColor(string color)
+    {
+        string query = @"SELECT COUNT(*) FROM FruitsAndVegetables WHERE Color = @color";
+        OpenDB();
+        using (SqlCommand cmd = new SqlCommand(query, conn))
+        {
+            cmd.Parameters.AddWithValue("@color", color);
+
+            int result = (int)cmd.ExecuteScalar();
+            return result;
+        }
+    }
+
+
+    // Получение количества овощей и фруктов каждого цвета
+    public DataTable GetCountForEachColor()
+    {
+        string query = @"SELECT Color, COUNT(*) AS Count FROM FruitsAndVegetables GROUP BY Color";
+        return ExecuteQuery(query);
+    }
+
+    // Овощи и фрукты с калорийностью ниже указанной
+    public DataTable GetByCaloriesBelow(int maxCalories)
+    {
+        string query = @"SELECT * FROM FruitsAndVegetables WHERE Calories < @maxCalories";
+        DataTable dt = new DataTable();
+        OpenDB();
+        using (SqlCommand cmd = new SqlCommand(query, conn))
+        {
+            cmd.Parameters.AddWithValue("@maxCalories", maxCalories);
+
+            using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+            {
+                adapter.Fill(dt);
+            }
+        }
+        return dt;
+    }
+
+
+    // Овощи и фрукты с калорийностью выше указанной
+    public DataTable GetByCaloriesAbove(int minCalories)
+    {
+        string query = @"SELECT * FROM FruitsAndVegetables WHERE Calories > @minCalories";
+        DataTable dt = new DataTable();
+        OpenDB();
+        using (SqlCommand cmd = new SqlCommand(query, conn))
+        {
+            cmd.Parameters.AddWithValue("@minCalories", minCalories);
+
+            using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+            {
+                adapter.Fill(dt);
+            }
+        }
+        return dt;
+    }
+
+
+    // Овощи и фрукты с калорийностью в диапазоне
+    public DataTable GetByCaloriesInRange(int minCalories, int maxCalories)
+    {
+        string query = @"SELECT * FROM FruitsAndVegetables WHERE Calories BETWEEN @minCalories AND @maxCalories";
+        DataTable dt = new DataTable();
+        OpenDB();
+        using (SqlCommand cmd = new SqlCommand(query, conn))
+        {
+            cmd.Parameters.AddWithValue("@minCalories", minCalories);
+            cmd.Parameters.AddWithValue("@maxCalories", maxCalories);
+
+            using (SqlDataAdapter adapter = new SqlDataAdapter(cmd))
+            {
+                adapter.Fill(dt);
+            }
+        }
+        return dt;
+    }
+
+
+    // Овощи и фрукты с цветом "красный" или "желтый"
+    public DataTable GetByColorRedOrYellow()
+    {
+        string query = "SELECT * FROM FruitsAndVegetables WHERE Color IN ('Red', 'Yellow')";
+        return ExecuteQuery(query);
     }
 }
