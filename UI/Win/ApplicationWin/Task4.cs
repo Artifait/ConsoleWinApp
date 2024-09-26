@@ -1,13 +1,12 @@
-﻿
-
+﻿using QuizTop.UI;
 using QuizTop;
-using QuizTop.UI;
 
-namespace NewQuizTop.UI.Win.ApplicationWin
+
+namespace ConsoleWinApp.UI.Win.ApplicationWin
 {
-    public class WinTaskOne : IWin
+    public class Task4 : IWin
     {
-        public WindowDisplay windowDisplay = new("Quiz Application", typeof(ProgramOptions));
+        public WindowDisplay windowDisplay = new("Task Four", typeof(ProgramOptions));
 
         public WindowDisplay WindowDisplay
         {

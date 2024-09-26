@@ -1,10 +1,12 @@
 ﻿
 #nullable enable
+using ConsoleWinApp.UI.Win.ApplicationWin;
+
 namespace QuizTop.UI.Win.ApplicationWin
 {
     public class WinStart : IWin
     {
-        public WindowDisplay windowDisplay = new("Quiz Application", typeof(ProgramOptions));
+        public WindowDisplay windowDisplay = new("Tasks", typeof(ProgramOptions));
 
         public WindowDisplay WindowDisplay
         {
@@ -33,6 +35,12 @@ namespace QuizTop.UI.Win.ApplicationWin
             Console.Clear();
             switch ((ProgramOptions)windowDisplay.CursorPosition)
             {
+                case ProgramOptions.Task3:
+                    Application.WinStack.Push(WindowsHandler.GetWindow<Task3>());
+                    break;
+                case ProgramOptions.Task4:
+                    Application.WinStack.Push(WindowsHandler.GetWindow<Task4>());
+                    break;
                 case ProgramOptions.Exit:
                     Application.IsRunning = false;
                     break;
@@ -41,6 +49,8 @@ namespace QuizTop.UI.Win.ApplicationWin
 
         public enum ProgramOptions
         {
+            Task3,  
+            Task4,
             Exit,
             CountOptions,
         }
